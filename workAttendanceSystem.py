@@ -22,7 +22,7 @@ import csv
 import pymysql
 
 spk = win32com.client.Dispatch("SAPI.SpVoice")
-
+#Prueba
 ID_NEW_REGISTER = 160
 ID_FINISH_REGISTER = 161
 
