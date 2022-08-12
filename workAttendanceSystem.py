@@ -29,6 +29,9 @@ ID_FINISH_REGISTER = 161
 ID_START_PUNCHCARD = 190
 ID_END_PUNCARD = 191
 
+ID_FIN_PUNCHCARD = 194
+ID_FIN2_PUNCARD = 195
+
 ID_TODAY_LOGCAT = 220
 ID_CUSTOM_LOGCAT = 260
 
@@ -118,6 +121,22 @@ class WAS(wx.Frame):
         self.end_puncard.Enable(False)
         puncardMenu.Append(self.end_puncard)
 
+        #Prueba registro salida
+        salidaR = wx.Menu()
+        self.salida_punchcard = wx.MenuItem(salidaR, ID_FIN_PUNCHCARD, "Salir de  sesión")
+        self.salida_punchcard.SetBitmap(wx.Bitmap("drawable/start_punchcard.png"))
+        self.salida_punchcard.SetTextColour("SLATE BLACK")
+        self.salida_punchcard.SetFont(menu_Font)
+        salidaR.Append(self.salida_punchcard)
+
+        self.salida2_puncard = wx.MenuItem(salidaR, ID_FIN2_PUNCARD, "finalizar sesión")
+        self.salida2_puncard.SetBitmap(wx.Bitmap("drawable/end_puncard.png"))
+        self.salida2_puncard.SetTextColour("SLATE BLACK")
+        self.salida2_puncard.SetFont(menu_Font)
+        self.salida2_puncard.Enable(False)
+        salidaR.Append(self.salida2_puncard)
+        #Fin prueba
+
         logcatMenu = wx.Menu()
         self.today_logcat = wx.MenuItem(logcatMenu, ID_TODAY_LOGCAT, "Salida del registro de hoy")
         self.today_logcat.SetBitmap(wx.Bitmap("drawable/open_logcat.png"))
@@ -170,6 +189,7 @@ class WAS(wx.Frame):
 
         menuBar.Append(registerMenu, "Registro")
         menuBar.Append(puncardMenu, "&Entrada")
+        menuBar.Append(salidaR, "&Salida")
         menuBar.Append(logcatMenu, "&Exportar A")
         menuBar.Append(RegistroA, "Asistencia") # Menu Asistencia DB
         menuBar.Append(setMenu, "&configurar")
@@ -180,6 +200,10 @@ class WAS(wx.Frame):
         self.Bind(wx.EVT_MENU, self.OnFinishRegisterClicked, id=ID_FINISH_REGISTER)
         self.Bind(wx.EVT_MENU, self.OnStartPunchCardClicked, id=ID_START_PUNCHCARD)
         self.Bind(wx.EVT_MENU, self.OnEndPunchCardClicked, id=ID_END_PUNCARD)
+        #Prueba
+        self.Bind(wx.EVT_MENU, self.OnSalidaPunchCardClicked, id=ID_FIN_PUNCHCARD)
+        self.Bind(wx.EVT_MENU, self.OnSalida2PunchCardClicked, id=ID_FIN2_PUNCARD)
+        #Fin
         self.Bind(wx.EVT_MENU, self.ExportTodayLog, id=ID_TODAY_LOGCAT)
         self.Bind(wx.EVT_MENU, self.ExportCustomLog, id=ID_CUSTOM_LOGCAT)
         self.Bind(wx.EVT_MENU, self.SetWorkingHours, id=ID_WORKING_HOURS)
@@ -192,35 +216,45 @@ class WAS(wx.Frame):
     def OnOpenLogcatClicked(self, event):
             self.loadDataBase(2)
             # Debe ampliarse para mostrar el desplazamiento
-            self.SetSize(1080, 560)
-            grid = wx.grid.Grid(self, pos=(420, 0), size=(640, 500))
-            grid.CreateGrid(100, 4)
+            self.SetSize(1240, 560)
+            grid = wx.grid.Grid(self, pos=(420, 0), size=(800, 500))
+            grid.CreateGrid(100, 5)
             for i in range(100):
-                for j in range(4):
+                for j in range(5):
                     grid.SetCellAlignment(i, j, wx.ALIGN_CENTER, wx.ALIGN_CENTER)
             grid.SetColLabelValue(0, "ID")  # etiqueta de la primera columna
             grid.SetColLabelValue(1, "Nombre")
             grid.SetColLabelValue(2, "Tiempo de marcado")
-            grid.SetColLabelValue(3, "Estas tarde")
+            grid.SetColLabelValue(3, "Tiempo de salida")
+            grid.SetColLabelValue(4, "Estas tarde")
 
             grid.SetColSize(0, 120)
             grid.SetColSize(1, 120)
             grid.SetColSize(2, 150)
             grid.SetColSize(3, 150)
+            grid.SetColSize(4, 150)
 
             # grid.SetCellTextColour("NAVY") Esta línea informa de un error en algunas máquinas
             for i, id in enumerate(self.logcat_id):
                 grid.SetCellValue(i, 0, str(id))
                 grid.SetCellValue(i, 1, self.logcat_name[i])
                 grid.SetCellValue(i, 2, self.logcat_datetime[i])
-                grid.SetCellValue(i, 3, self.logcat_late[i])
+                grid.SetCellValue(i, 3, self.logcat_datetimeSa[i])
+                grid.SetCellValue(i, 4, self.logcat_late[i])
+
+
+
 
     pass
 
     def OnCloseLogcatClicked(self, event):
-            self.SetSize(920, 560)
-
             self.initGallery()
+            self.SetSize(1032, 560)
+
+
+
+
+
     pass
 
         #Prueba 2
@@ -278,13 +312,13 @@ class WAS(wx.Frame):
         global Folderpath2
         Folderpath2 = ""
         dialog = wx.Dialog(self)
-        Label1 = wx.StaticText(dialog, -1, "Ingrese la identificación del empleado", pos=(30, 10))
-        t1 = wx.TextCtrl(dialog, -1, '', pos=(130, 10), size=(130, -1))
+        Label1 = wx.StaticText(dialog, -1, "ID del empleado", pos=(30, 10))
+        t1 = wx.TextCtrl(dialog, -1, '', pos=(150, 10), size=(130, -1))
         Label2 = wx.StaticText(dialog, -1, "fecha de salida (días)", pos=(30, 50))
         sampleList = [u'1', u'3', u'7', u'30']
-        t2 = wx.ComboBox(dialog, -1, value="1", pos=(130, 50), size=(130, -1), choices=sampleList,
+        t2 = wx.ComboBox(dialog, -1, value="1", pos=(150, 50), size=(130, -1), choices=sampleList,
                          style=wx.CB_READONLY)
-        button = wx.Button(dialog, -1, "Seleccione la ruta para guardar el archivo", pos=(120, 90))
+        button = wx.Button(dialog, -1, "Seleccione la ruta para guardar el archivo", pos=(60, 90))
         button.Bind(wx.EVT_BUTTON, self.save_route2, button)
         btn_confirm = wx.Button(dialog, 1, "confirmar", pos=(30, 150))
         btn_close = wx.Button(dialog, 2, "Cancelar", pos=(250, 150))
@@ -718,6 +752,128 @@ class WAS(wx.Frame):
         self.end_puncard.Enable(False)
         pass
 
+    #Prueba
+    def salida_cap(self, event):
+
+        # Llame a la función que establece el tiempo de trabajo y juzgue si llega tarde de acuerdo con la hora actual y el tiempo de trabajo
+
+        self.cap = cv2.VideoCapture(0)
+
+        self.loadDataBase(5)
+        print("la longitud es")
+        print(len(working_times))
+        if len(working_times) == 0:
+            win32api.MessageBox(0, "No ha configurado el tiempo de trabajo, configure el tiempo de trabajo primero y luego configure el tiempo de trabajo", "recordar", win32con.MB_ICONWARNING)
+            self.salida_punchcard.Enable(True)
+            self.salida2_puncard.Enable(False)
+        else:
+            working = working_times[0]
+            print("-----------")
+            print(working)
+            offworking = offworking_times[0]
+            print("-----------")
+            print(offworking)
+            while self.cap.isOpened():
+
+                flag, im_rd = self.cap.read()
+
+                kk = cv2.waitKey(1)
+
+                dets = detector(im_rd, 1)
+
+
+                if len(dets) != 0:
+                    biggest_face = dets[0]
+
+                    maxArea = 0
+                    for det in dets:
+                        w = det.right() - det.left()
+                        h = det.top() - det.bottom()
+                        if w * h > maxArea:
+                            biggest_face = det
+                            maxArea = w * h
+
+
+                    cv2.rectangle(im_rd, tuple([biggest_face.left(), biggest_face.top()]),
+                                  tuple([biggest_face.right(), biggest_face.bottom()]),
+                                  (255, 0, 255), 2)
+                    img_height, img_width = im_rd.shape[:2]
+                    image1 = cv2.cvtColor(im_rd, cv2.COLOR_BGR2RGB)
+                    pic = wx.Bitmap.FromBuffer(img_width, img_height, image1)
+
+                    self.bmp.SetBitmap(pic)
+
+
+                    shape = predictor(im_rd, biggest_face)
+                    features_cap = facerec.compute_face_descriptor(im_rd, shape)
+
+                    # Para una cara, recorre todas las características faciales almacenadas
+                    for i, knew_face_feature in enumerate(self.knew_face_feature):
+
+                        compare = return_euclidean_distance(features_cap, knew_face_feature)
+                        if compare == "similar":  # encontrado caras similares
+                            print("similar")
+                            flag = 0
+                            nowdt = self.getDateAndTime()
+                            for j, logcat_name in enumerate(self.logcat_name):
+                                if logcat_name == self.knew_name[i] and nowdt[0:nowdt.index(" ")] is \
+                                        self.logcat_datetime[
+                                            j][
+                                        0:self.logcat_datetime[
+                                            j].index(" ")]:
+                                    self.infoText.AppendText(nowdt + "Número de empleo:" + str(self.knew_id[i])
+                                                             + " Nombre:" + self.knew_name[i] + " No a iniciado sesion\r\n")
+                                    speak_info(self.knew_name[i] + "No a iniciado sesion ")
+                                    flag = 1
+                                    break
+
+                            if flag == 1:
+                                break
+
+                            if nowdt[nowdt.index(" ") + 1:-1] <= working:
+                                self.infoText.AppendText(nowdt + "Número de empleo:" + str(self.knew_id[i])
+                                                         + " Nombre:" + self.knew_name[i] + " Ingresó correctamente y no llegó tarde\r\n")
+                                speak_info(self.knew_name[i] + " Iniciar sesión con éxito ")
+                                self.insertARow([self.knew_id[i], self.knew_name[i], nowdt, "No"], 3)
+                                con = pymysql.connect(db='baseinf', user='root', passwd='', host='localhost', port=3306,
+                                                      autocommit=True)
+                                cur = con.cursor()
+                                sql = "INSERT INTO `logsalida` (`datetime`, `id`, `name`, `late`) VALUES (%s, %s, %s, %s)"
+                                cur.execute(sql, (nowdt,self.knew_id[i], self.knew_name[i], "No"))
+                            elif offworking >= nowdt[nowdt.index(" ") + 1:-1] >= working:
+                                self.infoText.AppendText(nowdt + "Número de empleo:" + str(self.knew_id[i])
+                                                         + " Nombre:" + self.knew_name[i] + " Ingresó con éxito, pero llegó tarde\r\n")
+                                speak_info(self.knew_name[i] + " Ingresó con éxito, pero llegó tarde")
+                                self.insertARow([self.knew_id[i], self.knew_name[i], nowdt, "Si"], 3)
+                                con = pymysql.connect(db='baseinf', user='root', passwd='', host='localhost', port=3306,
+                                                      autocommit=True)
+                                cur = con.cursor()
+                                sql = "INSERT INTO `logsalida` (`datetime`, `id`, `name`, `late`) VALUES (%s, %s, %s, %s)"
+                                cur.execute(sql, (nowdt, self.knew_id[i], self.knew_name[i], "Si"))
+                            elif nowdt[nowdt.index(" ") + 1:-1] > offworking:
+                                self.infoText.AppendText(nowdt + "Número de empleo:" + str(self.knew_id[i])
+                                                         + " Nombre:" + self.knew_name[i] + " Error al iniciar sesión, excediendo el tiempo de inicio de sesión\r\n")
+                                speak_info(self.knew_name[i] + " Error al iniciar sesión, horas extra ")
+                            self.loadDataBase(2)
+                            break
+                    if self.start_punchcard.IsEnabled():
+                        self.bmp.SetBitmap(wx.Bitmap(self.pic_index))
+                        _thread.exit()
+
+
+    def OnSalidaPunchCardClicked(self, event):
+        self.salida_punchcard.Enable(False)
+        self.salida2_puncard.Enable(True)
+        self.loadDataBase(2)
+        threading.Thread(target=self.salida_cap, args=(event,)).start()
+        pass
+
+    def OnSalida2PunchCardClicked(self, event):
+        self.salida_punchcard.Enable(True)
+        self.salida2_puncard.Enable(False)
+        pass
+    #Fin PRueba
+
     def initInfoText(self):
 
         resultText = wx.StaticText(parent=self, pos=(10, 20), size=(90, 60))
@@ -812,6 +968,10 @@ class WAS(wx.Frame):
             cur.execute("insert into logcat (id,name,datetime,late) values(?,?,?,?)",
                         (Row[0], Row[1], Row[2], Row[3]))
             print("registro de escritura exitoso")
+        if type == 3:
+            cur.execute("insert into logsalida (id,name,datetime,late) values(?,?,?,?)",
+                        (Row[0], Row[1], Row[2], Row[3]))
+            print("registro de escritura exitoso")
             pass
         cur.close()
         conn.commit()
@@ -822,7 +982,7 @@ class WAS(wx.Frame):
         nowday = self.getDateAndTime()
         day = nowday[0:nowday.index(" ")]
         print(day)
-        global logcat_id, logcat_name, logcat_datetime, logcat_late, working_times, offworking_times
+        global logcat_id, logcat_name, logcat_datetime, logcat_datetimeSa, logcat_late, working_times, offworking_times
         conn = sqlite3.connect("inspurer.db")
 
         cur = conn.cursor()  
@@ -844,8 +1004,10 @@ class WAS(wx.Frame):
             self.logcat_id = []
             self.logcat_name = []
             self.logcat_datetime = []
+            self.logcat_datetimeSa = []
             self.logcat_late = []
-            cur.execute('select id,name,datetime,late from logcat')
+            #cur.execute('select id,name,datetime,late from logcat')
+            cur.execute('select logcat.id,logcat.name,logcat.datetime,logsalida.datetime,logcat.late from logcat left join logsalida on logcat.id = logsalida.id')
             origin = cur.fetchall()
             for row in origin:
                 print(row[0])
@@ -855,7 +1017,9 @@ class WAS(wx.Frame):
                 print(row[2])
                 self.logcat_datetime.append(row[2])
                 print(row[3])
-                self.logcat_late.append(row[3])
+                self.logcat_datetimeSa.append(row[3])
+                print(row[4])
+                self.logcat_late.append(row[4])
         if type == 3:
             logcat_id = []
             logcat_name = []
