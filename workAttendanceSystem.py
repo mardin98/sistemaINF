@@ -225,8 +225,8 @@ class WAS(wx.Frame):
             grid.SetColLabelValue(0, "ID")  # etiqueta de la primera columna
             grid.SetColLabelValue(1, "Nombre")
             grid.SetColLabelValue(2, "Tiempo de marcado")
-            grid.SetColLabelValue(3, "Tiempo de salida")
-            grid.SetColLabelValue(4, "Estas tarde")
+            grid.SetColLabelValue(3, "A Tiempo")
+            grid.SetColLabelValue(4, "Tiempo de salida")
 
             grid.SetColSize(0, 120)
             grid.SetColSize(1, 120)
@@ -239,8 +239,8 @@ class WAS(wx.Frame):
                 grid.SetCellValue(i, 0, str(id))
                 grid.SetCellValue(i, 1, self.logcat_name[i])
                 grid.SetCellValue(i, 2, self.logcat_datetime[i])
-                grid.SetCellValue(i, 3, self.logcat_datetimeSa[i])
-                grid.SetCellValue(i, 4, self.logcat_late[i])
+                grid.SetCellValue(i, 3, self.logcat_late[i])
+                grid.SetCellValue(i, 4, self.logcat_datetimeSa[i])
 
 
 
@@ -250,10 +250,6 @@ class WAS(wx.Frame):
     def OnCloseLogcatClicked(self, event):
             self.initGallery()
             self.SetSize(1032, 560)
-
-
-
-
 
     pass
 
@@ -390,9 +386,17 @@ class WAS(wx.Frame):
         print("Eliminar empleado con id como:", id)
         conn = sqlite3.connect("inspurer.db")  # Establecer conexión con la base de datos
         cur = conn.cursor()  # obtener el objeto del cursor
+        con = pymysql.connect(db='baseinf', user='root', passwd='', host='localhost', port=3306,
+                              autocommit=True)
+        cursor = con.cursor()
+        sql4 = 'delete from worker_info1 where id=' + id
+        sql5 = 'delete from logcat where id=' + id
+        sql6 = 'delete from logsalida where id=' + id
+
         sql = 'select name from worker_info where id=' + id
         sql1 = 'delete from worker_info where id=' + id
         sql2 = 'delete from logcat where id=' + id
+        sql3 = 'delete from logsalida where id=' + id
         length = len(cur.execute(sql).fetchall())
         if length <= 0:
             win32api.MessageBox(0, "No se encuentra el empleado, vuelva a ingresar la identificación", "recordar", win32con.MB_ICONWARNING)
@@ -406,7 +410,12 @@ class WAS(wx.Frame):
             if self.OnYes(event):
                 cur.execute(sql1)
                 cur.execute(sql2)
+                cur.execute(sql3)
+                cursor.execute(sql4)
+                cursor.execute(sql5)
+                cursor.execute(sql6)
                 conn.commit()
+                con.commit()
                 dir = PATH_FACE + name
                 for file in os.listdir(dir):
                     os.remove(dir + "/" + file)
@@ -699,6 +708,7 @@ class WAS(wx.Frame):
                                             j][
                                         0:self.logcat_datetime[
                                             j].index(" ")]:
+                                    self.infoText.SetBackgroundColour('Red')
                                     self.infoText.AppendText(nowdt + "Número de empleo:" + str(self.knew_id[i])
                                                              + " Nombre:" + self.knew_name[i] + " Error al iniciar sesión, inicio de sesión repetido\r\n")
                                     speak_info(self.knew_name[i] + "Error al iniciar sesión, inicio de sesión repetido ")
@@ -709,6 +719,7 @@ class WAS(wx.Frame):
                                 break
 
                             if nowdt[nowdt.index(" ") + 1:-1] <= working:
+                                self.infoText.SetBackgroundColour('White')
                                 self.infoText.AppendText(nowdt + "Número de empleo:" + str(self.knew_id[i])
                                                          + " Nombre:" + self.knew_name[i] + " Ingresó correctamente y no llegó tarde\r\n")
                                 speak_info(self.knew_name[i] + " Iniciar sesión con éxito ")
@@ -719,6 +730,7 @@ class WAS(wx.Frame):
                                 sql = "INSERT INTO `logcat` (`datetime`, `id`, `name`, `late`) VALUES (%s, %s, %s, %s)"
                                 cur.execute(sql, (nowdt,self.knew_id[i], self.knew_name[i], "No"))
                             elif offworking >= nowdt[nowdt.index(" ") + 1:-1] >= working:
+                                self.infoText.SetBackgroundColour('Yellow')
                                 self.infoText.AppendText(nowdt + "Número de empleo:" + str(self.knew_id[i])
                                                          + " Nombre:" + self.knew_name[i] + " Ingresó con éxito, pero llegó tarde\r\n")
                                 speak_info(self.knew_name[i] + " Ingresó con éxito, pero llegó tarde")
@@ -729,6 +741,7 @@ class WAS(wx.Frame):
                                 sql = "INSERT INTO `logcat` (`datetime`, `id`, `name`, `late`) VALUES (%s, %s, %s, %s)"
                                 cur.execute(sql, (nowdt, self.knew_id[i], self.knew_name[i], "Si"))
                             elif nowdt[nowdt.index(" ") + 1:-1] > offworking:
+                                self.infoText.SetBackgroundColour('Red')
                                 self.infoText.AppendText(nowdt + "Número de empleo:" + str(self.knew_id[i])
                                                          + " Nombre:" + self.knew_name[i] + " Error al iniciar sesión, excediendo el tiempo de inicio de sesión\r\n")
                                 speak_info(self.knew_name[i] + " Error al iniciar sesión, horas extra ")
@@ -830,30 +843,28 @@ class WAS(wx.Frame):
                             if flag == 1:
                                 break
 
-                            if nowdt[nowdt.index(" ") + 1:-1] <= working:
+                            if nowdt[nowdt.index(" ") + 1:-1] == working:
                                 self.infoText.AppendText(nowdt + "Número de empleo:" + str(self.knew_id[i])
-                                                         + " Nombre:" + self.knew_name[i] + " Ingresó correctamente y no llegó tarde\r\n")
+                                                         + " Nombre:" + self.knew_name[i] + "Salio temprano\r\n")
                                 speak_info(self.knew_name[i] + " Iniciar sesión con éxito ")
                                 self.insertARow([self.knew_id[i], self.knew_name[i], nowdt, "No"], 3)
                                 con = pymysql.connect(db='baseinf', user='root', passwd='', host='localhost', port=3306,
                                                       autocommit=True)
                                 cur = con.cursor()
-                                sql = "INSERT INTO `logsalida` (`datetime`, `id`, `name`, `late`) VALUES (%s, %s, %s, %s)"
-                                cur.execute(sql, (nowdt,self.knew_id[i], self.knew_name[i], "No"))
-                            elif offworking >= nowdt[nowdt.index(" ") + 1:-1] >= working:
+                                sql = "UPDATE `logsalida` (`datetimeSa`, `id`, `name`, `late`) VALUES (%s, %s, %s, %s)"
+                                cur.execute(sql, (nowdt,self.knew_id[i], self.knew_name[i], "Si"))
+                            elif nowdt[nowdt.index(" ") + 1:-1] >= offworking:
                                 self.infoText.AppendText(nowdt + "Número de empleo:" + str(self.knew_id[i])
-                                                         + " Nombre:" + self.knew_name[i] + " Ingresó con éxito, pero llegó tarde\r\n")
-                                speak_info(self.knew_name[i] + " Ingresó con éxito, pero llegó tarde")
-                                self.insertARow([self.knew_id[i], self.knew_name[i], nowdt, "Si"], 3)
+                                                         + " Nombre:" + self.knew_name[
+                                                             i] + " Salio correctamente\r\n")
+                                speak_info(self.knew_name[i] + "Salio correctamente ")
+                                self.insertARow([self.knew_id[i], self.knew_name[i], nowdt, "No"], 3)
                                 con = pymysql.connect(db='baseinf', user='root', passwd='', host='localhost', port=3306,
                                                       autocommit=True)
                                 cur = con.cursor()
-                                sql = "INSERT INTO `logsalida` (`datetime`, `id`, `name`, `late`) VALUES (%s, %s, %s, %s)"
+                                sql = "INSERT INTO `logsalida` (`datetimeSa`, `id`, `name`, `late`) VALUES (%s, %s, %s, %s)"
                                 cur.execute(sql, (nowdt, self.knew_id[i], self.knew_name[i], "Si"))
-                            elif nowdt[nowdt.index(" ") + 1:-1] > offworking:
-                                self.infoText.AppendText(nowdt + "Número de empleo:" + str(self.knew_id[i])
-                                                         + " Nombre:" + self.knew_name[i] + " Error al iniciar sesión, excediendo el tiempo de inicio de sesión\r\n")
-                                speak_info(self.knew_name[i] + " Error al iniciar sesión, horas extra ")
+
                             self.loadDataBase(2)
                             break
                     if self.start_punchcard.IsEnabled():
@@ -879,7 +890,7 @@ class WAS(wx.Frame):
         resultText = wx.StaticText(parent=self, pos=(10, 20), size=(90, 60))
         resultText.SetBackgroundColour(wx.GREEN)
 
-        self.info = "\r\n" + self.getDateAndTime() + "Inicialización del programa exitosa\r\n"
+        self.info = "\r\n" + self.getDateAndTime() + " " + "Inicialización del programa exitosa\r\n"
 
         self.infoText = wx.TextCtrl(parent=self, size=(420, 500),
                                     style=(wx.TE_MULTILINE | wx.HSCROLL | wx.TE_READONLY))
@@ -969,7 +980,7 @@ class WAS(wx.Frame):
                         (Row[0], Row[1], Row[2], Row[3]))
             print("registro de escritura exitoso")
         if type == 3:
-            cur.execute("insert into logsalida (id,name,datetime,late) values(?,?,?,?)",
+            cur.execute("insert into logsalida (id,name,datetimeSa,late) values(?,?,?,?)",
                         (Row[0], Row[1], Row[2], Row[3]))
             print("registro de escritura exitoso")
             pass
@@ -1007,7 +1018,7 @@ class WAS(wx.Frame):
             self.logcat_datetimeSa = []
             self.logcat_late = []
             #cur.execute('select id,name,datetime,late from logcat')
-            cur.execute('select logcat.id,logcat.name,logcat.datetime,logsalida.datetime,logcat.late from logcat left join logsalida on logcat.id = logsalida.id')
+            cur.execute('select logcat.id,logcat.name,logcat.datetime,logcat.late,logsalida.datetimeSa from logcat left join logsalida on logcat.id = logsalida.id')
             origin = cur.fetchall()
             for row in origin:
                 print(row[0])
@@ -1017,9 +1028,10 @@ class WAS(wx.Frame):
                 print(row[2])
                 self.logcat_datetime.append(row[2])
                 print(row[3])
-                self.logcat_datetimeSa.append(row[3])
+                self.logcat_late.append(row[3])
                 print(row[4])
-                self.logcat_late.append(row[4])
+                self.logcat_datetimeSa.append(row[4])
+
         if type == 3:
             logcat_id = []
             logcat_name = []
@@ -1046,7 +1058,7 @@ class WAS(wx.Frame):
             print(countResult)
             str = "'"
             if not countResult:
-                sql = 'insert into time (id,working_time,offworking_time) values (1,' + str + working + str + ',' + str + offworking + str + ')'
+                sql = 'insert into time (id,working_time,offworking_time) values (id,' + str + working + str + ',' + str + offworking + str + ')'
                 cur.execute(sql)
                 print(sql)
                 conn.commit()
